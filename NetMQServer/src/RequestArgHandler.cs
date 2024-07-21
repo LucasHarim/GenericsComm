@@ -18,7 +18,8 @@ public static class RequestArgHandler
         return signature_str;
     }
 
-    public static void ValidateArgNumber(MethodInfo methodInfo, List<object> args)
+    
+    public static void ValidateArgNumber(MethodInfo methodInfo, Dictionary<string, object> args)
     {
         if (methodInfo.GetParameters().Length != args.Count)
         {
@@ -26,19 +27,19 @@ public static class RequestArgHandler
         }
     }
 
-    public static List<object> ValidateAndConvertReqArgs(MethodInfo methodInfo, List<object> args)
+    
+    public static List<object> ValidateAndConvertReqArgs(MethodInfo methodInfo, Dictionary<string,object> args)
     {
         ValidateArgNumber(methodInfo, args);
 
         List<object> validArgs = new();
 
-        int i = 0;
         foreach (ParameterInfo param in methodInfo.GetParameters())
         {
             try 
             {
-                
-                validArgs.Add(Convert.ChangeType(args[i], param.ParameterType));
+                args.TryGetValue(param.Name, out var arg);
+                validArgs.Add(Convert.ChangeType(arg, param.ParameterType));
             }
             catch (Exception e)
             {
@@ -46,7 +47,6 @@ public static class RequestArgHandler
                 throw new ArgumentException($"{e.Message} Argument '{param.Name}' does not match method signature: {GetMethodSignature(methodInfo)}");
             }
             
-            i++;
         }
 
         return validArgs;

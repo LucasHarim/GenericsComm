@@ -50,8 +50,6 @@ public class Server
 
             return false;
         }
-        
-
     }
 
 
@@ -65,7 +63,8 @@ public class Server
             {
                 MethodInfo serviceInfo = services.GetServiceInfo(request.serviceName);
 
-                List<object> validArgs = ValidateAndConvertReqArgs(serviceInfo, request.serviceArgs.Values.ToList());
+                // List<object> validArgs = ValidateAndConvertReqArgs(serviceInfo, request.serviceArgs.Values.ToList());
+                List<object> validArgs = ValidateAndConvertReqArgs(serviceInfo, request.serviceArgs);
                 string serviceOutput = services.InvokeService(request.serviceName, validArgs);
                 response = new ServiceResponse(SUCCESS, serviceOutput);
             }

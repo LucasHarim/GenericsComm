@@ -25,10 +25,9 @@ public class ServicesBase
             serviceInfo.Invoke(this, args.ToArray());
             return string.Empty;
         }
-        else
-        {
-            return serviceInfo.Invoke(this, args.ToArray()).ToString();   
-        }
+        
+        return serviceInfo.Invoke(this, args.ToArray()).ToString();   
+        
         
     }
 

@@ -51,6 +51,16 @@ if __name__ == '__main__':
             'serviceName': 'Divide',
             'serviceArgs': {'a': time.time(), 'b': randint(-10,10)}
         },
+
+        {
+            'serviceName': 'Divide',
+            'serviceArgs': {'a': 10, 'b': 1}
+        },
+
+        {
+            'serviceName': 'Divide',
+            'serviceArgs': {'b': 1, 'a': 10}
+        }
     ]
     
     
