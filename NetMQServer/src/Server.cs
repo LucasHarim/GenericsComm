@@ -45,9 +45,7 @@ public class Server
         }
         catch (Exception e)
         {
-            ServiceResponse response = new();
-            response.requestStatus = ERROR;
-            response.serviceOutput = e.Message;
+            ServiceResponse response = new ServiceResponse(ERROR, e.Message);
             repQueue.Enqueue(response);
 
             return false;
@@ -61,22 +59,19 @@ public class Server
     {
         taskQueue.Enqueue(() =>
         {
-            ServiceResponse response = new();
-            response.serviceOutput = String.Empty;        
+            ServiceResponse response;      
 
             try
             {
                 MethodInfo serviceInfo = services.GetServiceInfo(request.serviceName);
 
                 List<object> validArgs = ValidateAndConvertReqArgs(serviceInfo, request.serviceArgs.Values.ToList());
-                
-                response.serviceOutput = services.InvokeService(request.serviceName, validArgs);
-                response.requestStatus = SUCCESS;
+                string serviceOutput = services.InvokeService(request.serviceName, validArgs);
+                response = new ServiceResponse(SUCCESS, serviceOutput);
             }
             catch (Exception e)
             {
-                response.requestStatus = ERROR;
-                response.serviceOutput = e.Message;
+                response = new ServiceResponse(ERROR, e.Message);
             }
 
             responseQueue.Enqueue(response);
