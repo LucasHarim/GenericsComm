@@ -2,84 +2,50 @@ import zmq
 import time
 import json
 from random import randint
-
-class RequestStatus:
-
-    INVALID_REQUEST = 'INVALID REQUEST'
-    SUCCESS = 'SUCCESS'
-
-class Client:
+from service_request import RequestStatus, ServiceResponse, service_request
+class ClientTest:
 
     def __init__(self, host: str = 'tcp://localhost', port:int = 5555):
             
         self._context = zmq.Context()
         self.socket = self._context.socket(zmq.REQ)
         self.socket.connect(f'{host}:{port}')
-
-    def rcv_str(self) -> str:
-        return self.socket.recv_string()
-
+        
+    @service_request
+    def SayHello(self) -> None: ...
     
-    def send_str(self, msg: str) -> None:
-        self.socket.send_string(msg)
+    @service_request
+    def CheckMsg(self, msg: str) -> str: ...
+    
+    @service_request
+    def Sum(self, a: int, b: int) -> int: ...
+    
+    @service_request
+    def Divide(self, a: float, b: float) -> float: ...
+    
+    @service_request
+    def Add(self, a: int, b: float) -> float: ...
+
 
 
 
 if __name__ == '__main__':
 
-    context = zmq.Context()
-    client = context.socket(zmq.REQ)
-    client.connect('tcp://127.0.0.1:5555')
+    client = ClientTest()
     
-    requests = [
-        {
-            'serviceName': 'SayHello',
-            'serviceArgs': {}
-        },
-        
-        {
-            'serviceName': 'CheckMsg',
-            'serviceArgs': {'msg': 'Hi from client!'}
-        },
+    t0 = time.time()
 
-        {
-            'serviceName': 'Sum',
-            'serviceArgs': {'a': randint(-10, 10), 'b': randint(-10,10)}
-        },
-
-        {
-            'serviceName': 'Divide',
-            'serviceArgs': {'a': time.time(), 'b': randint(-10,10)}
-        },
-
-        {
-            'serviceName': 'Divide',
-            'serviceArgs': {'a': 10, 'b': 1}
-        },
-
-        {
-            'serviceName': 'Divide',
-            'serviceArgs': {'b': 1, 'a': 10}
-        }
-    ]
-    
-    
-    while True:
+    for i in range(10000):
         
+        client.SayHello()
+        client.CheckMsg(f'Hello from the ClientTest!')
         
-        for req in requests:
+        n1 = client.Divide(10, 1) + client.Sum(i, 1.0)
+        n2 = client.Sum(randint(-10, 10), randint(-10, 10))
         
-            client.send_string(json.dumps(req))
-            
-            res = json.loads(client.recv_string())
-            
-            if res.get('requestStatus') != RequestStatus.SUCCESS:
-                
-                _msg = res.get('serviceOutput')
-                _service_name = req.get('serviceName')
-                raise Exception(f'Invalid request to service \'{_service_name}\'. {_msg}')
-            else:
-                
-                print(f'[{time.time_ns()}] Got answer:\n{res}')
-            
-            time.sleep(0.1)
+        # print(n1)
+        # print(n2)
+
+    delta_time = time.time() - t0
+    print(f'Delta time: {round(delta_time, 3)} secs')
+        
