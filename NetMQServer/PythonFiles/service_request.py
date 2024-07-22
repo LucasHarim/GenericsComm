@@ -2,7 +2,6 @@ import json
 from dataclasses import dataclass
 from functools import wraps
 import zmq
-from typing import NewType
 
 class RequestStatus:
 
@@ -24,8 +23,8 @@ class ServiceResponse:
     requestStatus: str
     serviceOutput: str
 
-T = NewType('T', any)
 
+#TODO: implement a service_request that takes custom deserialization_functions as argument
 
 deserialization_functions = {
     int: lambda val_str: int(val_str),
@@ -36,7 +35,6 @@ deserialization_functions = {
 
 def deserialize_service_output(val: str, to_type: type) -> type:
 
-    
     deserializer: callable = deserialization_functions.get(to_type)
     return deserializer(val)
 
@@ -46,8 +44,7 @@ def service_request(function: callable) -> callable:
     @wraps(function)
     def wrapper(*args, **kwargs) -> dict:
         
-        result = function(*args, **kwargs)
-        
+        function(*args, **kwargs)
         
         service_args = {
             **{arg: val for arg, val in zip(function.__code__.co_varnames[1:], args[1:])},

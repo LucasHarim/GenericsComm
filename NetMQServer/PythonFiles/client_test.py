@@ -1,8 +1,11 @@
 import zmq
 import time
-import json
 from random import randint
-from service_request import RequestStatus, ServiceResponse, service_request
+from service_request import (
+    RequestStatus,
+    ServiceResponse,
+    service_request)
+
 class ClientTest:
 
     def __init__(self, host: str = 'tcp://localhost', port:int = 5555):
@@ -38,13 +41,15 @@ if __name__ == '__main__':
     for i in range(10000):
         
         client.SayHello()
-        client.CheckMsg(f'Hello from the ClientTest!')
         
+        msg = client.CheckMsg(f'Hello from the ClientTest!')
+        print(msg)
+
         n1 = client.Divide(10, 1) + client.Sum(i, 1.0)
         n2 = client.Sum(randint(-10, 10), randint(-10, 10))
         
-        # print(n1)
-        # print(n2)
+        print(n1)
+        print(n2)
 
     delta_time = time.time() - t0
     print(f'Delta time: {round(delta_time, 3)} secs')
