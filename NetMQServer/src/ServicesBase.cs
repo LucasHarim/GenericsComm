@@ -6,6 +6,11 @@ using System.Collections.Generic;
 public class ServicesBase
 {
     
+    public void CheckClientConnection()
+    {
+        Console.Write("Connection with client is established.");
+    }
+
     public MethodInfo GetServiceInfo(string name)
     {
         MethodInfo methodInfo = GetType().GetMethod(name);
