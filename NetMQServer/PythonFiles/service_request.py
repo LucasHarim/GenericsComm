@@ -30,6 +30,7 @@ deserialization_functions = {
     int: lambda val_str: int(val_str),
     float: lambda val_str: float(val_str),
     str: lambda val_str: val_str,
+    list: lambda val_str: json.loads(val_str),
     None: lambda val_str: None
     }
 
@@ -60,6 +61,7 @@ def service_request(function: callable) -> callable:
             raise Exception(f'Invalid request to service {function.__name__}. {response.serviceOutput}')
         
         return deserialize_service_output(response.serviceOutput, function.__annotations__['return'])
+        
 
     return wrapper
 
