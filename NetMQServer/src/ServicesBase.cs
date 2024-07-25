@@ -1,7 +1,7 @@
 using System;
 using System.Reflection;
 using System.Collections.Generic;
-
+using Newtonsoft.Json;
 
 public class ServicesBase
 {
@@ -31,7 +31,8 @@ public class ServicesBase
             return string.Empty;
         }
         
-        return serviceInfo.Invoke(this, args.ToArray()).ToString();   
+        // return serviceInfo.Invoke(this, args.ToArray()).ToString();   
+        return JsonConvert.SerializeObject(serviceInfo.Invoke(this, args.ToArray()));   
         
         
     }
