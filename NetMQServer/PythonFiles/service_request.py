@@ -31,6 +31,7 @@ deserialization_functions = {
     float: lambda val_str: float(val_str),
     str: lambda val_str: val_str,
     list: lambda val_str: json.loads(val_str),
+    dict: lambda val_str: json.loads(val_str),
     None: lambda val_str: None
     }
 

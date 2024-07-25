@@ -1,19 +1,36 @@
 import zmq
 import time
 from random import randint
+import json
 from service_request import (
     RequestStatus,
     ServiceResponse,
-    service_request)
+    service_request,
+    deserialization_functions)
+
 
 class ClientTest:
 
-    def __init__(self, host: str = 'tcp://localhost', port:int = 5555):
-            
+    def __init__(self, host: str = 'tcp://localhost', port:int = 5555, timeout_ms: int = 5000):
+        
+        self.host = host
+        self.port = port
         self._context = zmq.Context()
         self.socket = self._context.socket(zmq.REQ)
         self.socket.connect(f'{host}:{port}')
-        
+        self.socket.RCVTIMEO = timeout_ms
+
+        self._check_connection_with_service()
+    
+    def _check_connection_with_service(self) -> None:
+        try: 
+            self.CheckClientConnection()
+        except zmq.error.Again:
+            raise Exception(f'Timeout. Client cannot establish connection to server at {self.host}:{self.port}')  
+
+    @service_request
+    def CheckClientConnection(self) -> None: ...
+
     @service_request
     def SayHello(self) -> None: ...
     
@@ -30,7 +47,11 @@ class ClientTest:
     def Add(self, a: int, b: float) -> float: ...
 
 
+    @service_request
+    def GetList(self) -> list: ...
 
+    @service_request
+    def GetDictionary(self) -> dict: ...
 
 if __name__ == '__main__':
 
@@ -38,15 +59,17 @@ if __name__ == '__main__':
     
     t0 = time.time()
 
-    for i in range(10000):
+    for i in range(1000):
         
-        client.SayHello()
+        # client.SayHello()
         
-        msg = client.CheckMsg(f'Hello from the ClientTest!')
-        print(msg)
+        # msg = client.CheckMsg(f'Hello from the ClientTest!')
+        # print(msg)
 
-        n1 = client.Divide(10, 1) + client.Sum(i, 1.0)
+        n1 = client.Divide(1, 1) + client.Sum(i, 1.0)
         n2 = client.Sum(randint(-10, 10), randint(-10, 10))
+        print(client.GetList())
+        print(client.GetDictionary()["x"])
         
         print(n1)
         print(n2)
