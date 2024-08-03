@@ -9,7 +9,7 @@ namespace GenericsComm
     {    
         
         public delegate U ReceiveData<U>();
-        static void PutDataOnQueue<U>(ConcurrentQueue<U> queue, ReceiveData<U> rcvData)
+        public static void PutDataOnQueue<U>(ConcurrentQueue<U> queue, ReceiveData<U> rcvData, int threadTimeSleep = 1)
         {
             while (true)
             {
@@ -23,11 +23,28 @@ namespace GenericsComm
             return outData;
         }
 
-        public static Thread MakeDataReceiverThread<T>(ConcurrentQueue<T> queue, ReceiveData<T> rcvData)
+        public static Thread MakeDataReceiverThread<T>(ConcurrentQueue<T> queue, ReceiveData<T> rcvData, int threadTimeSleep = 1)
         {
-            Thread thread = new Thread(() => PutDataOnQueue(queue, rcvData));
+            Thread thread = new Thread(() => PutDataOnQueue(queue, rcvData, threadTimeSleep));
             return thread;
         }
+
+        public static void AbortThread(Thread thread)
+        {
+            if (thread.IsAlive)
+            {
+                try
+                {
+                    thread.Abort();
+                    thread.Join();
+                }
+                catch (ThreadAbortException ex)
+                {
+
+                }
+                
+            }
+        } 
 
         
     }
