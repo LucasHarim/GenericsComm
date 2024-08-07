@@ -14,6 +14,7 @@ using static RequestArgHandler;
 public class Server
 {
     Thread reqRcvrThread; 
+    NetMQPoller poller;
     public ServicesBase services;
     public ConcurrentQueue<Action> taskQueue;
     public string host;
@@ -80,12 +81,11 @@ public class Server
     }
 
 
-    void StartRcvServiceRequests(string host, int port)
+    void StartRcvServiceRequests(string host, int port, NetMQPoller poller)
     {   
         ConcurrentQueue<ServiceResponse> responseQueue = new ConcurrentQueue<ServiceResponse>();
 
         using (var repSocket = new ResponseSocket($"{host}:{port}"))
-        using (var poller = new NetMQPoller {repSocket})
         {
 
             repSocket.ReceiveReady += (s, e) =>
@@ -108,6 +108,7 @@ public class Server
                 e.Socket.SendFrame(JsonConvert.SerializeObject(response));
             };
 
+            poller.Add(repSocket);
             poller.Run();
         }
     }
@@ -115,7 +116,8 @@ public class Server
 
     public void Start()
     {
-        reqRcvrThread = new Thread(() => StartRcvServiceRequests(this.host, this.port));
+        poller = new();
+        reqRcvrThread = new Thread(() => StartRcvServiceRequests(this.host, this.port, poller));
         reqRcvrThread.Start();
         
         Console.Write($"Starting server {host}:{port}.\n");
@@ -134,6 +136,7 @@ public class Server
 
     public void Stop()
     {
+        poller.Stop();
         reqRcvrThread.Join();
     }
 }
