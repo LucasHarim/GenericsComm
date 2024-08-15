@@ -8,7 +8,6 @@ using NetMQ;
 using NetMQ.Sockets;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using UnityEngine;
 using static RequestArgHandler;
 
 public class Server
@@ -89,10 +88,7 @@ public class Server
         ConcurrentQueue<ServiceResponse> responseQueue = new ConcurrentQueue<ServiceResponse>();
         
         using (repSocket = new ResponseSocket($"{host}:{port}"))
-        using (poller = new NetMQPoller {repSocket})
         {
-
-            this.poller.Add(repSocket);
 
             repSocket.ReceiveReady += (s, e) =>
             {
@@ -110,7 +106,7 @@ public class Server
                     //Wait until the task is done
                     while (responseQueue.IsEmpty)
                     {
-                        Debug.Log($"Wating for new tasks on server {this.host}:{this.port}");
+                        Console.Write($"Wating for new tasks on server {this.host}:{this.port}");
                     }
                     
                     responseQueue.TryDequeue(out ServiceResponse response);
@@ -118,6 +114,7 @@ public class Server
                 }
             };
             
+            this.poller.Add(repSocket);
             this.poller.Run();
         }
     }
