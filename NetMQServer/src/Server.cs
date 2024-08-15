@@ -8,16 +8,18 @@ using NetMQ;
 using NetMQ.Sockets;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
+using UnityEngine;
 using static RequestArgHandler;
 
 public class Server
 {
-    Thread reqRcvrThread; 
     public ServicesBase services;
     public ConcurrentQueue<Action> taskQueue;
     public string host;
     public int port;
+    Thread reqRcvrThread; 
+    private NetMQPoller poller;
+    private ResponseSocket repSocket;
     string SUCCESS = "SUCCESS";
     string ERROR = "ERROR";
 
@@ -57,6 +59,7 @@ public class Server
     {
         taskQueue.Enqueue(() =>
         {
+        
             ServiceResponse response;      
 
             try
@@ -70,7 +73,7 @@ public class Server
             }
             catch (Exception e)
             {
-                response = new ServiceResponse(ERROR, e.Message);
+                response = new ServiceResponse(ERROR, e.InnerException.Message);
             }
 
             responseQueue.Enqueue(response);
@@ -82,33 +85,40 @@ public class Server
 
     void StartRcvServiceRequests(string host, int port)
     {   
+        AsyncIO.ForceDotNet.Force();
         ConcurrentQueue<ServiceResponse> responseQueue = new ConcurrentQueue<ServiceResponse>();
-
-        using (var repSocket = new ResponseSocket($"{host}:{port}"))
-        using (var poller = new NetMQPoller {repSocket})
+        
+        using (repSocket = new ResponseSocket($"{host}:{port}"))
+        using (poller = new NetMQPoller {repSocket})
         {
+
+            this.poller.Add(repSocket);
 
             repSocket.ReceiveReady += (s, e) =>
             {
-                
-                string msg = e.Socket.ReceiveFrameString();
-                
-                ServiceRequest validRequest;
-                bool isValidRequest = ValidateAndDeserializeRequest(msg, out validRequest, responseQueue);
-                
-                if (isValidRequest)
                 {
-                    EnqueueTask(validRequest, taskQueue, responseQueue);
+                    string msg = e.Socket.ReceiveFrameString();
+                    
+                    ServiceRequest validRequest;
+                    bool isValidRequest = ValidateAndDeserializeRequest(msg, out validRequest, responseQueue);
+                    
+                    if (isValidRequest)
+                    {
+                        EnqueueTask(validRequest, taskQueue, responseQueue);
+                    }
+                    
+                    //Wait until the task is done
+                    while (responseQueue.IsEmpty)
+                    {
+                        Debug.Log($"Wating for new tasks on server {this.host}:{this.port}");
+                    }
+                    
+                    responseQueue.TryDequeue(out ServiceResponse response);
+                    e.Socket.SendFrame(JsonConvert.SerializeObject(response));
                 }
-                
-                //Wait until the task is done
-                while (responseQueue.IsEmpty){}
-                
-                responseQueue.TryDequeue(out ServiceResponse response);
-                e.Socket.SendFrame(JsonConvert.SerializeObject(response));
             };
-
-            poller.Run();
+            
+            this.poller.Run();
         }
     }
 
@@ -134,6 +144,7 @@ public class Server
 
     public void Stop()
     {
+        poller.Stop();
         reqRcvrThread.Join();
     }
 }

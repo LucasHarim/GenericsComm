@@ -24,7 +24,7 @@ public class ServicesBase
 
     public string InvokeService(string name, List<object> args)
     {
-        MethodInfo serviceInfo = GetServiceInfo(name);
+        MethodInfo serviceInfo = GetServiceInfo(name); 
         if (serviceInfo.ReturnType == typeof(void))
         {
             serviceInfo.Invoke(this, args.ToArray());
