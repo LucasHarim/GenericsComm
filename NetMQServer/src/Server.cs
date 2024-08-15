@@ -83,7 +83,7 @@ public class Server
     }
 
 
-    void StartRcvServiceRequests(string host, int port)
+    void StartRcvServiceRequests(string host, int port, NetMQPoller poller)
     {   
         AsyncIO.ForceDotNet.Force();
         ConcurrentQueue<ServiceResponse> responseQueue = new ConcurrentQueue<ServiceResponse>();
@@ -125,7 +125,8 @@ public class Server
 
     public void Start()
     {
-        reqRcvrThread = new Thread(() => StartRcvServiceRequests(this.host, this.port));
+        poller = new();
+        reqRcvrThread = new Thread(() => StartRcvServiceRequests(this.host, this.port, poller));
         reqRcvrThread.Start();
         
         Console.Write($"Starting server {host}:{port}.\n");
