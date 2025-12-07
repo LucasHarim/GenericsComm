@@ -9,6 +9,7 @@ using NetMQ.Sockets;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using static RequestArgHandler;
+// using System.ComponentModel.Composition;
 
 public class Server
 {
@@ -59,7 +60,7 @@ public class Server
         taskQueue.Enqueue(() =>
         {
         
-            ServiceResponse response;      
+            ServiceResponse response;
 
             try
             {
@@ -72,7 +73,14 @@ public class Server
             }
             catch (Exception e)
             {
-                response = new ServiceResponse(ERROR, e.InnerException.Message);
+                if (e.InnerException != null)
+                {
+                    response = new ServiceResponse(ERROR, $"{e.Message}\n{e.InnerException.Message}");
+                }
+                else
+                {
+                    response = new ServiceResponse(ERROR, e.Message);
+                }   
             }
 
             responseQueue.Enqueue(response);
@@ -84,7 +92,6 @@ public class Server
 
     void StartRcvServiceRequests(string host, int port, NetMQPoller poller)
     {   
-        AsyncIO.ForceDotNet.Force();
         ConcurrentQueue<ServiceResponse> responseQueue = new ConcurrentQueue<ServiceResponse>();
         
         using (repSocket = new ResponseSocket($"{host}:{port}"))
@@ -114,14 +121,15 @@ public class Server
                 }
             };
             
-            this.poller.Add(repSocket);
-            this.poller.Run();
+            poller.Add(repSocket);
+            poller.Run();
         }
     }
 
 
     public void Start()
     {
+        AsyncIO.ForceDotNet.Force(); //
         poller = new();
         reqRcvrThread = new Thread(() => StartRcvServiceRequests(this.host, this.port, poller));
         reqRcvrThread.Start();
